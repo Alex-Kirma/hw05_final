@@ -296,27 +296,32 @@ class FollowTest(TestCase):
         """Авторизованный пользователь может подписываться на
         пользователей profile_follow."""
         count_no_follower = Follow.objects.all().count()
-        self.authorized_client.get(Follow.objects.create(
-            user=self.user_follow, author=self.user))
+        response = self.authorized_client.get(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user_follow.username}))
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(count_no_follower + 1, Follow.objects.all().count())
-        response = self.authorized_client.get(
-            reverse('posts:profile', kwargs={'username': self.user.username}))
-        first_object = response.context['page_obj'][0]
-        post_text_0 = first_object.text
-        post_author_0 = first_object.author
+        last_post = Post.objects.first()
+        post_text_0 = last_post.text
+        post_author_0 = last_post.author
         self.assertEqual(post_text_0, self.post.text)
         self.assertEqual(post_author_0, self.post.author)
 
     def test_profile_unfollow_autorized_client(self):
-        """Авторизованный пользователь может подписываться
-        на пользователей profile_unfollow."""
+        """Авторизованный пользователь может отписываться
+        от пользователей profile_unfollow."""
         count_no_follower = Follow.objects.all().count()
-        Follow.objects.create(user=self.user_follow, author=self.user)
+        response = self.authorized_client.get(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user_follow.username}))
+        self.assertEqual(response.status_code, 302)
         count_follower = Follow.objects.all().count()
         self.assertEqual(count_no_follower + 1, count_follower)
-        Follow.objects.get(user=self.user_follow, author=self.user).delete()
-        count_follower = Follow.objects.all().count()
-        self.assertEqual(count_no_follower, count_follower)
+        response = self.authorized_client.get(reverse(
+            'posts:profile_unfollow',
+            kwargs={'username': self.user_follow.username}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(count_no_follower, Follow.objects.all().count())
 
     def test_profile_follow_index_autorized_client(self):
         """Новая запись пользователя появляется в ленте тех,
