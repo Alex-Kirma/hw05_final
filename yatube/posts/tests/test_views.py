@@ -109,10 +109,11 @@ class PostsPagesTests(TestCase):
         response = self.authorized_client.get(
             reverse('posts:post_detail', kwargs={'post_id': self.post.pk})
         )
-        self.assertEqual(response.context.get('post').text, self.post.text)
-        self.assertEqual(response.context.get('post').author, self.post.author)
-        self.assertEqual(response.context.get('post').group, self.post.group)
-        self.assertEqual(response.context.get('post').image, self.post.image)
+        context = response.context.get('post')
+        self.assertEqual(context.text, self.post.text)
+        self.assertEqual(context.author, self.post.author)
+        self.assertEqual(context.group, self.post.group)
+        self.assertEqual(context.image, self.post.image)
 
     def test_page_create_post_form_correct_context_(self):
         """Провертка формы create_post."""
@@ -285,43 +286,65 @@ class FollowTest(TestCase):
             text='Тестовый текст поста',
             author=cls.user,
         )
-        cls.post_follower = Post.objects.create(
-            text='Тестовый текст поста подписчика',
-            author=cls.user_follow,
-        )
 
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.guest_client = Client()
 
-    def test_profile_follow_profile_unfollow_autorized_client(self):
-        """Авторизованный пользователь может подписываться и отписываться
-        от пользователей profile_follow и profile_unfollow."""
-        self.authorized_client.get(reverse(
-            'posts:profile', kwargs={'username': self.user.username})
-        )
+    def test_profile_follow_autorized_client(self):
+        """Авторизованный пользователь может подписываться на
+        пользователей profile_follow."""
+        count_no_follower = Follow.objects.all().count()
+        self.authorized_client.get(Follow.objects.create(
+            user=self.user_follow, author=self.user))
+        self.assertEqual(count_no_follower + 1, Follow.objects.all().count())
+        response = self.authorized_client.get(
+            reverse('posts:profile', kwargs={'username': self.user.username}))
+        first_object = response.context['page_obj'][0]
+        post_text_0 = first_object.text
+        post_author_0 = first_object.author
+        self.assertEqual(post_text_0, self.post.text)
+        self.assertEqual(post_author_0, self.post.author)
+
+    def test_profile_unfollow_autorized_client(self):
+        """Авторизованный пользователь может подписываться
+        на пользователей profile_unfollow."""
         count_no_follower = Follow.objects.all().count()
         Follow.objects.create(user=self.user_follow, author=self.user)
         count_follower = Follow.objects.all().count()
-        self.assertEqual(count_follower, count_no_follower + 1)
+        self.assertEqual(count_no_follower + 1, count_follower)
         Follow.objects.get(user=self.user_follow, author=self.user).delete()
         count_follower = Follow.objects.all().count()
         self.assertEqual(count_no_follower, count_follower)
 
     def test_profile_follow_index_autorized_client(self):
         """Новая запись пользователя появляется в ленте тех,
-        кто на него подписан и не появляется в ленте тех, кто не подписан"""
-        self.authorized_client.get(reverse(
-            'posts:profile', kwargs={'username': self.user.username})
-        )
+        кто на него подписан"""
         count_no_follower = Follow.objects.all().count()
-        Follow.objects.create(user=self.user_follow, author=self.user)
-        count_follower = Follow.objects.all().count()
-        self.assertEqual(count_no_follower + 1, count_follower)
-        self.assertEqual(Follow.objects.filter(
-            user=self.user_follow, author=self.user).exists(), True
+        count_post = Post.objects.all().count()
+        Follow.objects.create(user=self.user, author=self.user_follow)
+        Post.objects.create(text='Тестовый текст поста для подписки',
+                            author=self.user_follow)
+        self.assertEqual(count_no_follower + 1, Follow.objects.all().count())
+        self.assertEqual(count_post + 1, Post.objects.all().count())
+        count_post_follow = Post.objects.all().filter(
+            author__following__user=self.user).count()
+        self.assertEqual(count_post_follow, Post.objects.all().count() - 1)
+
+    def test_profile_follow_index_autorized_client_unfollow(self):
+        """Новая запись не пользователя появляется в ленте тех,
+        кто на него не подписан."""
+        count_no_follower = Follow.objects.all().count()
+        count_post = Post.objects.all().count()
+        Follow.objects.create(user=self.user, author=self.user_follow)
+        Post.objects.create(
+            text='Тестовый текст поста для подписки',
+            author=self.user_follow
         )
-        self.assertEqual(Follow.objects.filter(
-            user=self.user_unfollow, author=self.user).exists(), False
+        self.assertEqual(count_no_follower + 1, Follow.objects.all().count())
+        self.assertEqual(count_post + 1, Post.objects.all().count())
+        count_post_follow = Post.objects.all().filter(
+            author__following__user=self.user_unfollow).count(
         )
+        self.assertEqual(count_post_follow, Post.objects.all().count() - 2)

@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 
 from http import HTTPStatus
 
-from posts.models import Group, Post, Comment
+from posts.models import Group, Post, Comment, Follow
 
 User = get_user_model()
 
@@ -13,6 +13,8 @@ class PostsURLTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='test_user')
+        cls.user_unfollow = User.objects.create_user(
+            username='test_user_unfollow')
         cls.post = Post.objects.create(
             text='Текст',
             author=cls.user,
@@ -27,11 +29,17 @@ class PostsURLTests(TestCase):
             author=cls.user,
             text='Коментарий поста'
         )
+        cls.follow = Follow.objects.create(
+            user=cls.user,
+            author=cls.user_unfollow,
+        )
 
     def setUp(self):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.authorized_client_unfollow = Client()
+        self.authorized_client_unfollow.force_login(self.user_unfollow)
 
     def test_urls_status_code_and_correct_template_guest_client(self):
         """Проверка доступа к странице и шаблону для
@@ -80,10 +88,22 @@ class PostsURLTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
 
-    def test_urls_status_code_auturized_client_comment(self):
-        """Проверка доступа авторизированного пользователя
-        к follow."""
-        response = self.authorized_client.get(
+    def test_urls_status_code_authorized_client_comment_follow(self):
+        """Проверка доступа авторизированного пользователя к follow"""
+        response = self.authorized_client.get('/follow/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_urls_status_code_authorized_client_comment_profile_follow(self):
+        """Проверка доступа авторизированного пользователя к profile_follow"""
+        response = self.authorized_client_unfollow.get(
             f'/profile/{self.user.username}/follow/'
+        )
+        self.assertEqual(response.status_code, 302)
+
+    def test_urls_status_code_authorized_client_comment_profile_unfollow(self):
+        """Проверка доступа авторизированного пользователя
+        к profile_unfollow"""
+        response = self.authorized_client.get(
+            f'/profile/{self.user_unfollow.username}/unfollow/'
         )
         self.assertEqual(response.status_code, 302)

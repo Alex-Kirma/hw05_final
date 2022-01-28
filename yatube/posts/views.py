@@ -5,13 +5,13 @@ from django.contrib.auth.decorators import login_required
 
 from yatube.settings import VAR_NUMBER_POSTS
 
-from .models import Group, Post, Comment, Follow
+from .models import Group, Post, Follow
 from .forms import PostForm, CommentForm
 
 
 def paginator_page(request, posts):
     paginator = Paginator(posts, VAR_NUMBER_POSTS)
-    page_number = request.GET.get("page")
+    page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return page_obj
 
@@ -20,9 +20,9 @@ def index(request):
     posts = Post.objects.all()
     page_obj = paginator_page(request, posts)
     context = {
-        "page_obj": page_obj,
+        'page_obj': page_obj,
     }
-    return render(request, "posts/index.html", context)
+    return render(request, 'posts/index.html', context)
 
 
 def group_posts(request, slug):
@@ -30,10 +30,10 @@ def group_posts(request, slug):
     posts = group.posts.all()
     page_obj = paginator_page(request, posts)
     context = {
-        "group": group,
-        "page_obj": page_obj,
+        'group': group,
+        'page_obj': page_obj,
     }
-    return render(request, "posts/group_list.html", context)
+    return render(request, 'posts/group_list.html', context)
 
 
 def profile(request, username):
@@ -41,33 +41,30 @@ def profile(request, username):
     user = request.user
     posts = author.posts.all()
     number_of_posts = posts.count()
-    if user.is_authenticated and Follow.objects.filter(
-            user=user, author=author).exists():
-        following = True
-    else:
-        following = False
+    following = user.is_authenticated and Follow.objects.filter(
+        user=user, author=author).exists()
     page_obj = paginator_page(request, posts)
     context = {
-        "page_obj": page_obj,
-        "author": author,
-        "number_of_posts": number_of_posts,
-        "following": following
+        'page_obj': page_obj,
+        'author': author,
+        'number_of_posts': number_of_posts,
+        'following': following
     }
-    return render(request, "posts/profile.html", context)
+    return render(request, 'posts/profile.html', context)
 
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     number_of_posts = post.author.posts.count()
-    comments = Comment.objects.all().filter(post=post)
+    comments = post.comments.all()
     form = CommentForm()
     context = {
-        "post": post,
-        "number_of_posts": number_of_posts,
+        'post': post,
+        'number_of_posts': number_of_posts,
         'form': form,
         'comments': comments,
     }
-    return render(request, "posts/post_detail.html", context)
+    return render(request, 'posts/post_detail.html', context)
 
 
 @login_required
@@ -79,14 +76,14 @@ def post_create(request):
         post = form.save(commit=False)
         post.author = request.user
         post.save()
-        return redirect("posts:profile", username=request.user)
+        return redirect('posts:profile', username=request.user)
 
     groups = Group.objects.all()
     context = {
-        "form": form,
-        "groups": groups,
+        'form': form,
+        'groups': groups,
     }
-    return render(request, "posts/create_post.html", context)
+    return render(request, 'posts/create_post.html', context)
 
 
 @login_required
@@ -99,17 +96,17 @@ def post_edit(request, post_id):
         instance=post
     )
     if post.author != request.user:
-        return redirect("posts:post_detail", post_id=post.pk)
+        return redirect('posts:post_detail', post_id=post.pk)
     if form.is_valid():
-        post = form.save()
+        form.save()
         return redirect("posts:post_detail", post_id=post.pk)
     context = {
-        "groups": groups,
-        "is_edit": True,
-        "post": post,
-        "form": form,
+        'groups': groups,
+        'is_edit': True,
+        'post': post,
+        'form': form,
     }
-    return render(request, "posts/create_post.html", context)
+    return render(request, 'posts/create_post.html', context)
 
 
 @login_required

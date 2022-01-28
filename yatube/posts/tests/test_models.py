@@ -91,5 +91,5 @@ class PostModelTest(TestCase):
     def test_object_name_is_text_field_post(self):
         """__str__ post - проверка содержимого поля post."""
         post = PostModelTest.post
-        post_object_name_text = post.text
-        self.assertEqual(post_object_name_text, str(post.text[:15]))
+        post_object_name_text = post.text[:15]
+        self.assertEqual(post_object_name_text, str(post.text))

@@ -63,7 +63,7 @@ class Post(models.Model):
         verbose_name_plural = 'Посты'
 
     def __str__(self):
-        return self.text[:15]
+        return self.text[:30]
 
 
 class Comment(models.Model):
@@ -106,3 +106,10 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Автор подписки',
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_name'),
+        ]
