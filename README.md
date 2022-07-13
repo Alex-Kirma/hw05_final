@@ -20,9 +20,9 @@ git clone git@github.com:Alex-Kirma/hw05_final.git
 python3 -3.7 -m venv venv
 . venv/scripts/activate
 ```
-+ Обновить инсталятор pip.
++ Обновить менеджер пакетов pip.
 ```bash
-python -m pip install --upgrade pip.
+python -m pip install --upgrade pip
 ```
 + Установить зависимости из файла requirements.txt.
 ```bash
@@ -32,7 +32,7 @@ pip install -r requirements.txt
 ```bash
 python manage.py migrate
 ```
-+ Создать супер пользователя.
++ Создать суперпользователя.
 ```bash
 python manage.py createsuperuser
 ```
