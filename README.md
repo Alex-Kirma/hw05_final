@@ -1,6 +1,6 @@
 # Социальная сеть Yatube
 ## Технологии
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/p?color=brightgreen)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/P?color=brightgreen&label=Pyton)
 ![PyPI - Python Version](https://img.shields.io/badge/Django-3.2-brightgreen)
 + Регистрация пользователй
   > Реализована регистрация и верификация пользователей, восстановление и смена пароля при помощи почты.
