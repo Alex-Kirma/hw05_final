@@ -40,4 +40,4 @@ python manage.py createsuperuser
 ```bash
 python manage.py runserver
 ```
-# Автор: Кырма Алексей.
+## Автор: Кырма Алексей.
